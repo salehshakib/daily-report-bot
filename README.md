@@ -52,7 +52,7 @@ Without Blob, logins are lost on cold starts (`/tmp` only).
 | Name | Value |
 |------|--------|
 | `TELEGRAM_BOT_TOKEN` | From @BotFather |
-| `PM_API_URL` | `https://api.pmv3.taghyeer.ai/api/v1` |
+| `PM_API_URL` | `https://******/api/v1` |
 | `TIMEZONE` | `Asia/Dhaka` |
 | `BLOB_READ_WRITE_TOKEN` | From Vercel Blob store |
 
