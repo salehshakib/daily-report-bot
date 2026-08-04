@@ -5,7 +5,15 @@ const LOCAL_DIR = path.join(__dirname, 'sessions');
 const BLOB_PREFIX = 'sessions/';
 
 function blobToken() {
-  return process.env.BLOB_READ_WRITE_TOKEN || '';
+  // Official name from Vercel Blob "read-write token" checkbox
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    return process.env.BLOB_READ_WRITE_TOKEN;
+  }
+  // Fallback: any *BLOB*READ_WRITE_TOKEN* style name from store connections
+  for (const [key, value] of Object.entries(process.env)) {
+    if (/BLOB.*READ_WRITE_TOKEN/i.test(key) && value) return value;
+  }
+  return '';
 }
 
 function onVercel() {
@@ -19,9 +27,19 @@ function useBlob() {
 function assertStorage() {
   if (onVercel() && !useBlob()) {
     throw new Error(
-      'BLOB_READ_WRITE_TOKEN is missing on Vercel. Connect Blob with read-write token and redeploy.'
+      'BLOB_READ_WRITE_TOKEN is missing at runtime. In Vercel → Settings → Environment Variables, confirm it exists for Production, then Redeploy.'
     );
   }
+}
+
+function storageMode() {
+  const tokenKeys = Object.keys(process.env).filter(k => /BLOB/i.test(k));
+  if (onVercel()) {
+    return useBlob()
+      ? `vercel-blob (keys: ${tokenKeys.join(', ') || 'none'})`
+      : `MISSING_BLOB_TOKEN (seen BLOB keys: ${tokenKeys.join(', ') || 'none'}; env=${process.env.VERCEL_ENV || '?'})`;
+  }
+  return useBlob() ? 'blob' : 'local-file';
 }
 
 function localPath(id) {
@@ -161,11 +179,6 @@ async function clearPendingLogin(telegramUserId) {
   existing.updatedAt = new Date().toISOString();
   if (useBlob()) await saveBlob(id, existing);
   else saveLocal(id, existing);
-}
-
-function storageMode() {
-  if (onVercel()) return useBlob() ? 'vercel-blob' : 'MISSING_BLOB_TOKEN';
-  return useBlob() ? 'blob' : 'local-file';
 }
 
 module.exports = {

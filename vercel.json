@@ -5,6 +5,7 @@
   ],
   "routes": [
     { "src": "/api/setup-webhook", "dest": "/api/setup-webhook.js" },
+    { "src": "/api/debug-storage", "dest": "/api/debug-storage.js" },
     { "src": "/api/webhook", "dest": "/api/webhook.js" }
   ],
   "functions": {
