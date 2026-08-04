@@ -60,9 +60,11 @@ https://YOUR_APP.vercel.app/api/setup-webhook
 
 Then message the bot `/start`.
 
-### Note on sessions
+### Note
 
-Saved logins are stored in `/tmp` on Vercel (ephemeral). After cold starts you may need to `/login` again.
+- Stop local `npm run telegram` while using Vercel — local polling deletes the webhook.
+- After deploy, open `/api/setup-webhook` again if `/start` stops working.
+- Saved logins live in `/tmp` on Vercel (ephemeral). You may need `/login` again after cold starts.
 
 ## Report format
 

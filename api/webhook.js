@@ -1,5 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { registerBotHandlers } = require('../lib/bot-handlers');
+const { handleUpdate } = require('../lib/bot-handlers');
 
 let bot;
 
@@ -9,9 +9,7 @@ function getBot() {
     if (!token) {
       throw new Error('Missing TELEGRAM_BOT_TOKEN');
     }
-    // Webhook mode — no polling on Vercel
     bot = new TelegramBot(token, { webHook: false, polling: false });
-    registerBotHandlers(bot);
   }
   return bot;
 }
@@ -24,7 +22,8 @@ module.exports = async function handler(req, res) {
 
   try {
     const tgBot = getBot();
-    tgBot.processUpdate(req.body);
+    // Must await — otherwise Vercel freezes before sendMessage finishes
+    await handleUpdate(tgBot, req.body || {});
     res.status(200).json({ ok: true });
   } catch (err) {
     console.error(err);
