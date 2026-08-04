@@ -108,7 +108,9 @@ async function saveBlob(id, data) {
     token: blobToken(),
   });
 
-  // Brief pause then verify (CDN can lag)
+  // Only verify when credentials are being stored (pending-login saves have no email yet)
+  if (!data.email || !data.password) return;
+
   await new Promise(r => setTimeout(r, 300));
   const verify = await loadBlob(id);
   if (!verify?.email || verify.email !== data.email || verify.password !== data.password) {

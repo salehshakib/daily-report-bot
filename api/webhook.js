@@ -14,19 +14,40 @@ function getBot() {
   return bot;
 }
 
+function parseBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  if (typeof req.body === 'string' && req.body) {
+    try {
+      return JSON.parse(req.body);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(200).json({ ok: true, message: 'Telegram webhook. Use POST.' });
     return;
   }
 
+  // Always ack Telegram quickly so it does not disable the webhook on handler errors
   try {
     const tgBot = getBot();
-    // Must await — otherwise Vercel freezes before sendMessage finishes
-    await handleUpdate(tgBot, req.body || {});
-    res.status(200).json({ ok: true });
+    await handleUpdate(tgBot, parseBody(req));
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, error: err.message });
+    console.error('webhook error:', err);
+    try {
+      const update = parseBody(req);
+      const chatId = update?.message?.chat?.id;
+      if (chatId) {
+        await getBot().sendMessage(chatId, `Error: ${err.message}`);
+      }
+    } catch (notifyErr) {
+      console.error('failed to notify chat:', notifyErr.message);
+    }
   }
+
+  res.status(200).json({ ok: true });
 };
