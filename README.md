@@ -10,7 +10,7 @@ cp .env.example .env   # fill TELEGRAM_BOT_TOKEN + PM_API_URL
 npm run telegram
 ```
 
-Users provide PM email/password via Telegram `/login` — nothing stored in `.env`.
+Credentials are saved in `sessions.json` keyed by Telegram user id (gitignored).
 
 ## Commands
 
@@ -18,7 +18,7 @@ Users provide PM email/password via Telegram `/login` — nothing stored in `.en
 |---------|----------------|
 | `/start` | Help + Telegram user id |
 | `/login` | Ask for email/password (two lines) |
-| `/run` | Generate report with saved credentials |
+| `/run` | Login with saved credentials (retries 3x) then generate report |
 | `/logout` | Clear saved credentials |
 | `/whoami` | Telegram id + login status |
 
@@ -37,34 +37,37 @@ Telegram **polling does not work** on Vercel. This app uses a **webhook**.
 
 1. [vercel.com](https://vercel.com) → **Add New Project** → import `daily-report-bot`
 2. Framework Preset: **Other**
-3. Root Directory: `.` (default)
-4. Build Command: leave empty
-5. Output Directory: leave empty
-6. Install Command: `npm install`
+3. Install Command: `npm install`
 
-### 2. Environment variables
+### 2. Add Blob storage (required for saved logins)
+
+1. Vercel project → **Storage** → **Create** → **Blob**
+2. Connect it to this project  
+3. Ensure env var `BLOB_READ_WRITE_TOKEN` is present (Vercel usually adds it)
+
+Without Blob, logins are lost on cold starts (`/tmp` only).
+
+### 3. Environment variables
 
 | Name | Value |
 |------|--------|
 | `TELEGRAM_BOT_TOKEN` | From @BotFather |
 | `PM_API_URL` | `https://api.pmv3.taghyeer.ai/api/v1` |
 | `TIMEZONE` | `Asia/Dhaka` |
+| `BLOB_READ_WRITE_TOKEN` | From Vercel Blob store |
 
-### 3. Deploy, then register webhook
-
-Open once:
+### 4. Deploy, then register webhook
 
 ```
 https://YOUR_APP.vercel.app/api/setup-webhook
 ```
 
-Then message the bot `/start`.
+Then `/start` in Telegram.
 
-### Note
+### Notes
 
-- Stop local `npm run telegram` while using Vercel — local polling deletes the webhook.
-- After deploy, open `/api/setup-webhook` again if `/start` stops working.
-- Saved logins live in `/tmp` on Vercel (ephemeral). You may need `/login` again after cold starts.
+- Stop local `npm run telegram` while using Vercel — polling deletes the webhook.
+- `/run` retries PM login up to **3 times**; if all fail it clears that user’s saved credentials and asks them to `/login` again.
 
 ## Report format
 
