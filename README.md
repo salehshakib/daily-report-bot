@@ -64,7 +64,7 @@ Next day: N/A
 
 ```bash
 npm install
-cp .env.example .env   # fill TELEGRAM_BOT_TOKEN, PM_API_URL, …
+cp .env.example .env   # fill in your values
 npm start
 ```
 
@@ -85,23 +85,11 @@ Production uses a **webhook** (polling doesn’t work on serverless).
 
 ### 2. Blob (required)
 
-1. **Storage → Create → Blob** · connect to this project  
-2. Confirm `BLOB_READ_WRITE_TOKEN` is in env  
+**Storage → Create → Blob** and connect it to this project. Without Blob, logins vanish on cold starts.
 
-Without Blob, logins vanish on cold starts.
+Copy the same keys from `.env.example` into the Vercel project (Production), then redeploy.
 
-### 3. Env vars
-
-| Variable | |
-|----------|--|
-| `TELEGRAM_BOT_TOKEN` | From [@BotFather](https://t.me/BotFather) |
-| `PM_API_URL` | e.g. `https://api.pmv3.taghyeer.ai/api/v1` |
-| `TIMEZONE` | `Asia/Dhaka` |
-| `BLOB_READ_WRITE_TOKEN` | From Blob store |
-| `BLOB_STORE_ID` | Optional |
-| `CRON_SECRET` | Long random string (keep private) |
-
-### 4. Wire Telegram
+### 3. Wire Telegram
 
 After deploy, open once:
 
@@ -111,7 +99,7 @@ https://YOUR_APP.vercel.app/api/setup-webhook
 
 Then `/start` in the bot.
 
-### 5. After-hours cron
+### 4. After-hours cron
 
 Hobby can’t schedule “every hour” as one expression, so `vercel.json` lists **once-daily** jobs for:
 
@@ -120,11 +108,11 @@ Hobby can’t schedule “every hour” as one expression, so `vercel.json` list
 A ping only fires when:
 
 - it’s at/after 18:30  
-- the stored PM JWT is still valid (`exp`)  
+- the stored PM JWT is still valid  
 - there’s an active task  
 - you haven’t `/pause` or `/complete` yet today  
 
-Add `CRON_SECRET`, redeploy, then check **Settings → Cron Jobs**.
+Confirm under **Settings → Cron Jobs** after deploy.
 
 ---
 
