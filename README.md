@@ -1,96 +1,49 @@
-# daily-report-bot
+# Daily Report Bot
 
-Telegram bot that logs into Taghyeer PM and generates a daily task report.
+A small Telegram companion for Taghyeer PM.
 
-## Local
+Log in once, then pull today’s report, check what’s still running after work hours, and pause or complete it — without opening the PM dashboard.
 
-```bash
-npm install
-cp .env.example .env   # fill TELEGRAM_BOT_TOKEN + PM_API_URL
-npm start
-```
+Built as a personal tool. Runs locally for quick iteration, or on Vercel with webhooks + Blob + cron.
 
-Credentials are saved per Telegram user id:
-- Local: `sessions/<telegramUserId>.json`
-- Vercel: private Blob `sessions/<telegramUserId>.json` (requires `BLOB_READ_WRITE_TOKEN`)
+---
 
-## Commands
+## What it does
 
-| Command | What it does |
-|---------|----------------|
+| | |
+|---|---|
+| **Daily report** | `/run` → today + next working day (Sun–Thu week) |
+| **Active task** | `/active` → what’s running, for how long |
+| **Quick actions** | `/pause` · `/complete` |
+| **After-hours nudge** | From **18:30 Asia/Dhaka**, hourly reminders until you pause/complete |
+
+Sessions are per Telegram user. Passwords stay in private storage (local files, or Vercel Blob in production).
+
+---
+
+## Talk to it
+
+| Command | |
+|---------|--|
 | `/start` | Help |
-| `/login` | Ask for email/password (two lines) |
-| `/run` | Generate today's report |
-| `/active` | Show active task |
-| `/pause` | Pause active task |
-| `/complete` | Complete active task |
+| `/login` | Save PM email + password |
+| `/run` | Generate today’s report |
+| `/active` | Show active task + timers |
+| `/pause` | Pause the active task |
+| `/complete` | Complete the active task |
 | `/logout` | Clear saved credentials |
 | `/whoami` | Login status |
 
-Login format:
+**Login** — send two lines (or `/login` first):
 
 ```
-example@gmail.com
-example123
+you@company.com
+your-password
 ```
 
-## Deploy on Vercel
+---
 
-Telegram **polling does not work** on Vercel. This app uses a **webhook**.
-
-### 1. Import in Vercel
-
-1. [vercel.com](https://vercel.com) → **Add New Project** → import `daily-report-bot`
-2. Framework Preset: **Other**
-3. Install Command: `npm install`
-
-### 2. Add Blob storage (required for saved logins)
-
-1. Vercel project → **Storage** → **Create** → **Blob**
-2. Connect it to this project  
-3. Ensure env var `BLOB_READ_WRITE_TOKEN` is present (Vercel usually adds it)
-
-Without Blob, logins are lost on cold starts (`/tmp` only).
-
-### 3. Environment variables
-
-| Name | Value |
-|------|--------|
-| `TELEGRAM_BOT_TOKEN` | From @BotFather |
-| `PM_API_URL` | Your PM API base URL (from `.env`) |
-| `TIMEZONE` | `Asia/Dhaka` |
-| `BLOB_READ_WRITE_TOKEN` | From Vercel Blob store |
-| `BLOB_STORE_ID` | Optional |
-| `CRON_SECRET` | Random string (same as local `.env`) |
-
-### 4. Deploy, then register webhook
-
-```
-https://YOUR_APP.vercel.app/api/setup-webhook
-```
-
-Then `/start` in Telegram.
-
-### 5. Cron (active-task alert)
-
-Hobby plans cannot run one recurring hourly cron, so `vercel.json` defines **separate once-daily jobs** for:
-
-**18:30, 19:30, 20:30, 21:30, 22:30, 23:30 Asia/Dhaka**
-
-Each run only notifies if:
-- time is at/after 18:30
-- PM JWT is still valid
-- user has an active task
-- user has not already `/pause` or `/complete` today (`activeTaskResolvedDate`)
-
-After adding `CRON_SECRET`, redeploy. Confirm under **Vercel → Settings → Cron Jobs**.
-
-### Notes
-
-- Stop local `npm start` while using Vercel — polling deletes the webhook.
-- `/run` retries PM login up to **3 times**; if all fail it clears that user’s saved credentials and asks them to `/login` again.
-
-## Report format
+## Sample report
 
 ```
 Date: 2026-08-04
@@ -103,4 +56,84 @@ Today:
 Next day: N/A
 ```
 
-**Next day** = next working day (Sun–Thu). Thursday → Sunday.
+**Next day** = next working day. Thursday rolls to Sunday.
+
+---
+
+## Run locally
+
+```bash
+npm install
+cp .env.example .env   # fill TELEGRAM_BOT_TOKEN, PM_API_URL, …
+npm start
+```
+
+Uses Telegram **polling**. Sessions land in `sessions/<telegramUserId>.json`.
+
+> Don’t run local polling and Vercel at the same time — polling replaces the webhook.
+
+---
+
+## Deploy on Vercel
+
+Production uses a **webhook** (polling doesn’t work on serverless).
+
+### 1. Project
+
+1. Import the repo on [vercel.com](https://vercel.com)
+2. Framework: **Other** · Install: `npm install`
+
+### 2. Blob (required)
+
+1. **Storage → Create → Blob** · connect to this project  
+2. Confirm `BLOB_READ_WRITE_TOKEN` is in env  
+
+Without Blob, logins vanish on cold starts.
+
+### 3. Env vars
+
+| Variable | |
+|----------|--|
+| `TELEGRAM_BOT_TOKEN` | From [@BotFather](https://t.me/BotFather) |
+| `PM_API_URL` | e.g. `https://api.pmv3.taghyeer.ai/api/v1` |
+| `TIMEZONE` | `Asia/Dhaka` |
+| `BLOB_READ_WRITE_TOKEN` | From Blob store |
+| `BLOB_STORE_ID` | Optional |
+| `CRON_SECRET` | Long random string (keep private) |
+
+### 4. Wire Telegram
+
+After deploy, open once:
+
+```
+https://YOUR_APP.vercel.app/api/setup-webhook
+```
+
+Then `/start` in the bot.
+
+### 5. After-hours cron
+
+Hobby can’t schedule “every hour” as one expression, so `vercel.json` lists **once-daily** jobs for:
+
+**18:30 · 19:30 · 20:30 · 21:30 · 22:30 · 23:30** Asia/Dhaka
+
+A ping only fires when:
+
+- it’s at/after 18:30  
+- the stored PM JWT is still valid (`exp`)  
+- there’s an active task  
+- you haven’t `/pause` or `/complete` yet today  
+
+Add `CRON_SECRET`, redeploy, then check **Settings → Cron Jobs**.
+
+---
+
+## Stack
+
+Node 18+ · `node-telegram-bot-api` · Axios · Vercel Blob · Vercel Cron
+
+---
+
+## License
+
+Personal / pet project. Use and fork freely.
