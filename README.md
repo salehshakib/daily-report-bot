@@ -18,11 +18,14 @@ Credentials are saved per Telegram user id:
 
 | Command | What it does |
 |---------|----------------|
-| `/start` | Help + Telegram user id |
+| `/start` | Help |
 | `/login` | Ask for email/password (two lines) |
-| `/run` | Login with saved credentials (retries 3x) then generate report |
+| `/run` | Generate today's report |
+| `/active` | Show active task |
+| `/pause` | Pause active task |
+| `/complete` | Complete active task |
 | `/logout` | Clear saved credentials |
-| `/whoami` | Telegram id + login status |
+| `/whoami` | Login status |
 
 Login format:
 
@@ -58,6 +61,7 @@ Without Blob, logins are lost on cold starts (`/tmp` only).
 | `TIMEZONE` | `Asia/Dhaka` |
 | `BLOB_READ_WRITE_TOKEN` | From Vercel Blob store |
 | `BLOB_STORE_ID` | Optional |
+| `CRON_SECRET` | Random string (same as local `.env`) |
 
 ### 4. Deploy, then register webhook
 
@@ -66,6 +70,14 @@ https://YOUR_APP.vercel.app/api/setup-webhook
 ```
 
 Then `/start` in Telegram.
+
+### 5. Cron (active-task alert)
+
+Configured in `vercel.json` — runs daily at **18:30 Asia/Dhaka** (`30 12 * * *` UTC).
+
+If a logged-in user still has an active task and their PM JWT is not expired, the bot sends a Telegram reminder (`/pause` / `/complete`).
+
+After adding `CRON_SECRET`, redeploy. Confirm under **Vercel → Settings → Cron Jobs**.
 
 ### Notes
 

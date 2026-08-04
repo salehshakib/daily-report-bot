@@ -32,16 +32,6 @@ function assertStorage() {
   }
 }
 
-function storageMode() {
-  const tokenKeys = Object.keys(process.env).filter(k => /BLOB/i.test(k));
-  if (onVercel()) {
-    return useBlob()
-      ? `vercel-blob (keys: ${tokenKeys.join(', ') || 'none'})`
-      : `MISSING_BLOB_TOKEN (seen BLOB keys: ${tokenKeys.join(', ') || 'none'}; env=${process.env.VERCEL_ENV || '?'})`;
-  }
-  return useBlob() ? 'blob' : 'local-file';
-}
-
 function localPath(id) {
   return path.join(LOCAL_DIR, `${id}.json`);
 }
@@ -167,22 +157,6 @@ async function setPendingLogin(telegramUserId, pending) {
   else saveLocal(id, next);
 }
 
-async function clearPendingLogin(telegramUserId) {
-  assertStorage();
-  const id = String(telegramUserId);
-  const existing = await getSession(id);
-  if (!existing?.pendingLogin) return;
-
-  delete existing.pendingLogin;
-  if (!existing.email && !existing.password) {
-    await clearSession(id);
-    return;
-  }
-  existing.updatedAt = new Date().toISOString();
-  if (useBlob()) await saveBlob(id, existing);
-  else saveLocal(id, existing);
-}
-
 async function patchSession(telegramUserId, patch) {
   assertStorage();
   const id = String(telegramUserId);
@@ -252,8 +226,6 @@ module.exports = {
   replaceSession,
   clearSession,
   setPendingLogin,
-  clearPendingLogin,
   patchSession,
   listLoggedInSessions,
-  storageMode,
 };
