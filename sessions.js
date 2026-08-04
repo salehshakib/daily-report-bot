@@ -27,20 +27,28 @@ async function loadSessions() {
   }
 
   try {
-    const { list } = require('@vercel/blob');
-    const { blobs } = await list({ prefix: BLOB_PATHNAME });
-    const blob = blobs.find(b => b.pathname === BLOB_PATHNAME);
-    if (!blob?.url) return {};
-
-    const res = await fetch(blob.url, {
-      headers: {
-        Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
-      },
+    const { get } = require('@vercel/blob');
+    const result = await get(BLOB_PATHNAME, {
+      access: 'private',
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     });
-    if (!res.ok) return {};
-    const data = await res.json();
+
+    if (!result || result.statusCode !== 200 || !result.stream) {
+      return {};
+    }
+
+    const chunks = [];
+    for await (const chunk of result.stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const text = Buffer.concat(chunks).toString('utf8');
+    const data = JSON.parse(text);
     return data && typeof data === 'object' ? data : {};
   } catch (err) {
+    // Missing blob on first login is normal
+    if (/not found|404|BlobNotFound/i.test(err.message || '')) {
+      return {};
+    }
     console.error('Failed to load sessions from Blob:', err.message);
     return {};
   }
@@ -68,7 +76,7 @@ async function saveSessions(sessions) {
 }
 
 /**
- * Sessions JSON shape:
+ * Sessions JSON shape (Blob pathname: sessions.json):
  * {
  *   "<telegramUserId>": {
  *     "email": "...",
