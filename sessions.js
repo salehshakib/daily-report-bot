@@ -102,7 +102,7 @@ async function saveBlob(id, data) {
   await put(blobPath(id), JSON.stringify(data, null, 2), {
     access: 'private',
     addRandomSuffix: false,
-    overwrite: true,
+    allowOverwrite: true,
     contentType: 'application/json',
     cacheControlMaxAge: 0,
     token: blobToken(),
