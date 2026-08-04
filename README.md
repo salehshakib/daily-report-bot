@@ -10,7 +10,9 @@ cp .env.example .env   # fill TELEGRAM_BOT_TOKEN + PM_API_URL
 npm start
 ```
 
-Credentials are saved in `sessions.json` keyed by Telegram user id (gitignored).
+Credentials are saved per Telegram user id:
+- Local: `sessions/<telegramUserId>.json`
+- Vercel: private Blob `sessions/<telegramUserId>.json` (requires `BLOB_READ_WRITE_TOKEN`)
 
 ## Commands
 

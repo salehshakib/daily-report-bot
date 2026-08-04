@@ -1,131 +1,149 @@
 const fs = require('fs');
 const path = require('path');
 
-const LOCAL_FILE = path.join(__dirname, 'sessions.json');
-const BLOB_PATHNAME = 'sessions.json';
+const LOCAL_DIR = path.join(__dirname, 'sessions');
+const BLOB_PREFIX = 'sessions/';
 
 function useBlob() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
-function loadLocal() {
+function localPath(telegramUserId) {
+  return path.join(LOCAL_DIR, `${telegramUserId}.json`);
+}
+
+function blobPath(telegramUserId) {
+  return `${BLOB_PREFIX}${telegramUserId}.json`;
+}
+
+function ensureLocalDir() {
+  if (!fs.existsSync(LOCAL_DIR)) {
+    fs.mkdirSync(LOCAL_DIR, { recursive: true });
+  }
+}
+
+function loadLocal(telegramUserId) {
   try {
-    if (!fs.existsSync(LOCAL_FILE)) return {};
-    return JSON.parse(fs.readFileSync(LOCAL_FILE, 'utf8'));
+    const file = localPath(telegramUserId);
+    if (!fs.existsSync(file)) return null;
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch {
-    return {};
+    return null;
   }
 }
 
-function saveLocal(sessions) {
-  fs.writeFileSync(LOCAL_FILE, JSON.stringify(sessions, null, 2), 'utf8');
+function saveLocal(telegramUserId, data) {
+  ensureLocalDir();
+  fs.writeFileSync(localPath(telegramUserId), JSON.stringify(data, null, 2), 'utf8');
 }
 
-async function loadSessions() {
-  if (!useBlob()) {
-    return loadLocal();
-  }
+function deleteLocal(telegramUserId) {
+  const file = localPath(telegramUserId);
+  if (fs.existsSync(file)) fs.unlinkSync(file);
+}
 
+async function loadBlob(telegramUserId) {
+  const { head } = require('@vercel/blob');
+  const pathname = blobPath(telegramUserId);
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+
+  let meta;
   try {
-    const { head } = require('@vercel/blob');
-    const meta = await head(BLOB_PATHNAME, {
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
-
-    // Bypass CDN cache — private session data must be fresh
-    const url = `${meta.downloadUrl || meta.url}${
-      (meta.downloadUrl || meta.url).includes('?') ? '&' : '?'
-    }t=${Date.now()}`;
-
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
-      },
-      cache: 'no-store',
-    });
-    if (res.status === 404) return {};
-    if (!res.ok) {
-      throw new Error(`Blob fetch failed: ${res.status}`);
-    }
-    const data = await res.json();
-    return data && typeof data === 'object' ? data : {};
+    meta = await head(pathname, { token });
   } catch (err) {
     if (/not found|404|BlobNotFound|NoSuchKey/i.test(err.message || '')) {
-      return {};
+      return null;
     }
-    console.error('Failed to load sessions from Blob:', err.message);
-    return {};
+    throw err;
+  }
+
+  const base = meta.downloadUrl || meta.url;
+  const url = `${base}${base.includes('?') ? '&' : '?'}t=${Date.now()}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Blob fetch failed: ${res.status}`);
+  const data = await res.json();
+  return data && typeof data === 'object' ? data : null;
+}
+
+async function saveBlob(telegramUserId, data) {
+  const { put } = require('@vercel/blob');
+  const pathname = blobPath(telegramUserId);
+  const body = JSON.stringify(data, null, 2);
+
+  await put(pathname, body, {
+    access: 'private',
+    addRandomSuffix: false,
+    overwrite: true,
+    contentType: 'application/json',
+    cacheControlMaxAge: 0,
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  });
+
+  // Verify write is readable (avoid silent CDN/stale failures)
+  const verify = await loadBlob(telegramUserId);
+  if (!verify || verify.email !== data.email) {
+    throw new Error('Session save verification failed — credentials not persisted');
   }
 }
 
-async function saveSessions(sessions) {
-  if (!useBlob()) {
-    saveLocal(sessions);
-    return;
-  }
-
+async function deleteBlob(telegramUserId) {
+  const { del } = require('@vercel/blob');
   try {
-    const { put } = require('@vercel/blob');
-    await put(BLOB_PATHNAME, JSON.stringify(sessions, null, 2), {
-      access: 'private',
-      addRandomSuffix: false,
-      overwrite: true,
-      contentType: 'application/json',
-      cacheControlMaxAge: 0,
+    await del(blobPath(telegramUserId), {
       token: process.env.BLOB_READ_WRITE_TOKEN,
     });
   } catch (err) {
-    console.error('Failed to save sessions to Blob:', err.message);
-    throw err;
+    if (!/not found|404|BlobNotFound/i.test(err.message || '')) {
+      throw err;
+    }
   }
 }
 
-/**
- * Sessions JSON shape (Blob pathname: sessions.json):
- * {
- *   "<telegramUserId>": {
- *     "email": "...",
- *     "password": "...",
- *     "name": "...",
- *     "updatedAt": "..."
- *   }
- * }
- */
 async function getSession(telegramUserId) {
-  const sessions = await loadSessions();
-  return sessions[String(telegramUserId)] || null;
+  const id = String(telegramUserId);
+  try {
+    if (useBlob()) return await loadBlob(id);
+    return loadLocal(id);
+  } catch (err) {
+    console.error('getSession failed:', err.message);
+    return null;
+  }
 }
 
 async function setSession(telegramUserId, data) {
-  const sessions = await loadSessions();
-  const key = String(telegramUserId);
-  sessions[key] = {
-    ...sessions[key],
+  const id = String(telegramUserId);
+  const existing = (await getSession(id)) || {};
+  const next = {
+    ...existing,
     ...data,
     updatedAt: new Date().toISOString(),
   };
-  if (sessions[key].pendingLogin == null) {
-    delete sessions[key].pendingLogin;
-  }
-  await saveSessions(sessions);
-  return sessions[key];
-}
+  if (next.pendingLogin == null) delete next.pendingLogin;
 
-async function clearSession(telegramUserId) {
-  const sessions = await loadSessions();
-  delete sessions[String(telegramUserId)];
-  await saveSessions(sessions);
+  if (useBlob()) await saveBlob(id, next);
+  else saveLocal(id, next);
+  return next;
 }
 
 async function replaceSession(telegramUserId, data) {
-  const sessions = await loadSessions();
-  const key = String(telegramUserId);
-  sessions[key] = {
+  const id = String(telegramUserId);
+  const next = {
     ...data,
     updatedAt: new Date().toISOString(),
   };
-  await saveSessions(sessions);
-  return sessions[key];
+  if (useBlob()) await saveBlob(id, next);
+  else saveLocal(id, next);
+  return next;
+}
+
+async function clearSession(telegramUserId) {
+  const id = String(telegramUserId);
+  if (useBlob()) await deleteBlob(id);
+  else deleteLocal(id);
 }
 
 async function setPendingLogin(telegramUserId, pending) {
@@ -133,16 +151,19 @@ async function setPendingLogin(telegramUserId, pending) {
 }
 
 async function clearPendingLogin(telegramUserId) {
-  const sessions = await loadSessions();
-  const key = String(telegramUserId);
-  if (!sessions[key]) return;
-  delete sessions[key].pendingLogin;
-  if (!sessions[key].email && !sessions[key].password) {
-    delete sessions[key];
-  } else {
-    sessions[key].updatedAt = new Date().toISOString();
+  const id = String(telegramUserId);
+  const existing = await getSession(id);
+  if (!existing) return;
+
+  delete existing.pendingLogin;
+  if (!existing.email && !existing.password) {
+    await clearSession(id);
+    return;
   }
-  await saveSessions(sessions);
+
+  existing.updatedAt = new Date().toISOString();
+  if (useBlob()) await saveBlob(id, existing);
+  else saveLocal(id, existing);
 }
 
 module.exports = {
