@@ -8,7 +8,7 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node index.js",
+    "start": "node index.js --telegram",
     "telegram": "node index.js --telegram"
   },
   "dependencies": {

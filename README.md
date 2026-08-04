@@ -6,11 +6,11 @@ Telegram bot that logs into Taghyeer PM and generates a daily task report.
 
 ```bash
 npm install
-cp .env.example .env   # fill TELEGRAM_BOT_TOKEN + PM URLs
-npm run telegram       # polling mode
+cp .env.example .env   # fill TELEGRAM_BOT_TOKEN + PM_API_URL
+npm run telegram
 ```
 
-CLI one-shot: `npm start` (uses `WEBSITE_USERNAME` / `WEBSITE_PASSWORD`).
+Users provide PM email/password via Telegram `/login` — nothing stored in `.env`.
 
 ## Commands
 
@@ -33,9 +33,7 @@ example123
 
 Telegram **polling does not work** on Vercel. This app uses a **webhook**.
 
-### 1. Push repo to GitHub (done if you followed setup)
-
-### 2. Import in Vercel
+### 1. Import in Vercel
 
 1. [vercel.com](https://vercel.com) → **Add New Project** → import `daily-report-bot`
 2. Framework Preset: **Other**
@@ -44,36 +42,27 @@ Telegram **polling does not work** on Vercel. This app uses a **webhook**.
 5. Output Directory: leave empty
 6. Install Command: `npm install`
 
-### 3. Environment variables (Project → Settings → Environment Variables)
-
-Add for **Production** (and Preview if you want):
+### 2. Environment variables
 
 | Name | Value |
 |------|--------|
 | `TELEGRAM_BOT_TOKEN` | From @BotFather |
-| `WEBSITE_LOGIN_URL` | `https://api.pmv3.taghyeer.ai/api/v1/login` |
-| `PM_API_BASE` | `https://api.pmv3.taghyeer.ai/api/v1` |
+| `PM_API_URL` | `https://api.pmv3.taghyeer.ai/api/v1` |
 | `TIMEZONE` | `Asia/Dhaka` |
 
-Do **not** put real passwords in Vercel env for multi-user — users `/login` in Telegram. Optional CLI vars `WEBSITE_USERNAME` / `WEBSITE_PASSWORD` are only for local `npm start`.
+### 3. Deploy, then register webhook
 
-### 4. Deploy
-
-Click **Deploy**. Note your URL, e.g. `https://daily-report-bot.vercel.app`
-
-### 5. Register Telegram webhook
-
-Open once in the browser:
+Open once:
 
 ```
 https://YOUR_APP.vercel.app/api/setup-webhook
 ```
 
-You should see `"ok": true` and the webhook URL. Then message your bot `/start`.
+Then message the bot `/start`.
 
 ### Note on sessions
 
-Saved logins are stored in `/tmp` on Vercel (ephemeral). After cold starts or new instances you may need to `/login` again. For permanent storage later, use a database or Redis.
+Saved logins are stored in `/tmp` on Vercel (ephemeral). After cold starts you may need to `/login` again.
 
 ## Report format
 
