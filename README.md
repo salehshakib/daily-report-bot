@@ -47,7 +47,7 @@ Telegram **polling does not work** on Vercel. This app uses a **webhook**.
 | Name | Value |
 |------|--------|
 | `TELEGRAM_BOT_TOKEN` | From @BotFather |
-| `PM_API_URL` | `https://api.pmv3.taghyeer.ai/api/v1` |
+| `PM_API_URL` | `https://******/api/v1` |
 | `TIMEZONE` | `Asia/Dhaka` |
 
 ### 3. Deploy, then register webhook
