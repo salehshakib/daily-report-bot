@@ -27,26 +27,30 @@ async function loadSessions() {
   }
 
   try {
-    const { get } = require('@vercel/blob');
-    const result = await get(BLOB_PATHNAME, {
-      access: 'private',
+    const { head } = require('@vercel/blob');
+    const meta = await head(BLOB_PATHNAME, {
       token: process.env.BLOB_READ_WRITE_TOKEN,
     });
 
-    if (!result || result.statusCode !== 200 || !result.stream) {
-      return {};
-    }
+    // Bypass CDN cache — private session data must be fresh
+    const url = `${meta.downloadUrl || meta.url}${
+      (meta.downloadUrl || meta.url).includes('?') ? '&' : '?'
+    }t=${Date.now()}`;
 
-    const chunks = [];
-    for await (const chunk of result.stream) {
-      chunks.push(Buffer.from(chunk));
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
+      },
+      cache: 'no-store',
+    });
+    if (res.status === 404) return {};
+    if (!res.ok) {
+      throw new Error(`Blob fetch failed: ${res.status}`);
     }
-    const text = Buffer.concat(chunks).toString('utf8');
-    const data = JSON.parse(text);
+    const data = await res.json();
     return data && typeof data === 'object' ? data : {};
   } catch (err) {
-    // Missing blob on first login is normal
-    if (/not found|404|BlobNotFound/i.test(err.message || '')) {
+    if (/not found|404|BlobNotFound|NoSuchKey/i.test(err.message || '')) {
       return {};
     }
     console.error('Failed to load sessions from Blob:', err.message);
@@ -66,7 +70,9 @@ async function saveSessions(sessions) {
       access: 'private',
       addRandomSuffix: false,
       allowOverwrite: true,
+      overwrite: true,
       contentType: 'application/json',
+      cacheControlMaxAge: 0,
       token: process.env.BLOB_READ_WRITE_TOKEN,
     });
   } catch (err) {
@@ -99,6 +105,10 @@ async function setSession(telegramUserId, data) {
     ...data,
     updatedAt: new Date().toISOString(),
   };
+  // Drop null pendingLogin if present
+  if (sessions[key].pendingLogin == null) {
+    delete sessions[key].pendingLogin;
+  }
   await saveSessions(sessions);
   return sessions[key];
 }
@@ -109,7 +119,6 @@ async function clearSession(telegramUserId) {
   await saveSessions(sessions);
 }
 
-/** Overwrite this user's record (does not merge). */
 async function replaceSession(telegramUserId, data) {
   const sessions = await loadSessions();
   const key = String(telegramUserId);
