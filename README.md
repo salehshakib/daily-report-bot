@@ -73,15 +73,17 @@ Then `/start` in Telegram.
 
 ### 5. Cron (active-task alert)
 
-Configured in `vercel.json` — runs **every 30 minutes**.
+Hobby plans cannot run one cron every 30 minutes, so `vercel.json` defines **separate once-daily jobs** for:
 
-Alerts only start at **18:30 Asia/Dhaka**, then repeat every 30 minutes while the task is still active and the PM JWT is valid.
+**18:30, 19:00, 19:30, …, 23:30 Asia/Dhaka**
 
-If the user `/pause` or `/complete` (or the active task is already gone), that day is marked resolved and cron stops notifying them.
+Each run only notifies if:
+- time is at/after 18:30
+- PM JWT is still valid
+- user has an active task
+- user has not already `/pause` or `/complete` today (`activeTaskResolvedDate`)
 
 After adding `CRON_SECRET`, redeploy. Confirm under **Vercel → Settings → Cron Jobs**.
-
-> Note: Vercel Hobby may only allow once-daily crons. Frequent schedules need a Pro plan (or an external cron hitting `/api/cron-active-task` with `Authorization: Bearer $CRON_SECRET`).
 
 ### Notes
 
