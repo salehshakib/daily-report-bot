@@ -3,6 +3,15 @@
   "functions": {
     "api/webhook.js": {
       "maxDuration": 60
+    },
+    "api/cron-active-task.js": {
+      "maxDuration": 60
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron-active-task",
+      "schedule": "30 12 * * *"
+    }
+  ]
 }

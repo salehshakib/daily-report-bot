@@ -183,11 +183,75 @@ async function clearPendingLogin(telegramUserId) {
   else saveLocal(id, existing);
 }
 
+async function patchSession(telegramUserId, patch) {
+  assertStorage();
+  const id = String(telegramUserId);
+  const existing = (await getSession(id)) || {};
+  const next = {
+    ...existing,
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  };
+  if (useBlob()) await saveBlob(id, next);
+  else saveLocal(id, next);
+  return next;
+}
+
+async function listLoggedInSessions() {
+  assertStorage();
+  const ids = useBlob() ? await listBlobSessionIds() : listLocalSessionIds();
+  const sessions = [];
+
+  for (const id of ids) {
+    const data = useBlob() ? await loadBlob(id) : loadLocal(id);
+    if (!data?.email || !data?.password) continue;
+    sessions.push({
+      telegramUserId: id,
+      chatId: data.chatId || id,
+      email: data.email,
+      password: data.password,
+      name: data.name,
+      activeTaskAlertDate: data.activeTaskAlertDate || null,
+    });
+  }
+
+  return sessions;
+}
+
+function listLocalSessionIds() {
+  if (!fs.existsSync(LOCAL_DIR)) return [];
+  return fs
+    .readdirSync(LOCAL_DIR)
+    .filter(name => /^\d+\.json$/.test(name))
+    .map(name => name.replace(/\.json$/, ''));
+}
+
+async function listBlobSessionIds() {
+  const { list } = require('@vercel/blob');
+  const token = blobToken();
+  const ids = [];
+  let cursor;
+
+  do {
+    const page = await list({ prefix: BLOB_PREFIX, token, cursor, limit: 1000 });
+    for (const blob of page.blobs || []) {
+      const match = String(blob.pathname || '').match(/^sessions\/(\d+)\.json$/);
+      if (match) ids.push(match[1]);
+    }
+    cursor = page.cursor;
+    if (!page.hasMore) break;
+  } while (cursor);
+
+  return ids;
+}
+
 module.exports = {
   getSession,
   replaceSession,
   clearSession,
   setPendingLogin,
   clearPendingLogin,
+  patchSession,
+  listLoggedInSessions,
   storageMode,
 };
