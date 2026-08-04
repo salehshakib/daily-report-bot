@@ -109,6 +109,18 @@ async function clearSession(telegramUserId) {
   await saveSessions(sessions);
 }
 
+/** Overwrite this user's record (does not merge). */
+async function replaceSession(telegramUserId, data) {
+  const sessions = await loadSessions();
+  const key = String(telegramUserId);
+  sessions[key] = {
+    ...data,
+    updatedAt: new Date().toISOString(),
+  };
+  await saveSessions(sessions);
+  return sessions[key];
+}
+
 async function setPendingLogin(telegramUserId, pending) {
   await setSession(telegramUserId, { pendingLogin: pending });
 }
@@ -130,6 +142,7 @@ module.exports = {
   getSession,
   setSession,
   clearSession,
+  replaceSession,
   setPendingLogin,
   clearPendingLogin,
 };
