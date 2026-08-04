@@ -73,9 +73,9 @@ Then `/start` in Telegram.
 
 ### 5. Cron (active-task alert)
 
-Hobby plans cannot run one cron every 30 minutes, so `vercel.json` defines **separate once-daily jobs** for:
+Hobby plans cannot run one recurring hourly cron, so `vercel.json` defines **separate once-daily jobs** for:
 
-**18:30, 19:00, 19:30, …, 23:30 Asia/Dhaka**
+**18:30, 19:30, 20:30, 21:30, 22:30, 23:30 Asia/Dhaka**
 
 Each run only notifies if:
 - time is at/after 18:30

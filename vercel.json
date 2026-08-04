@@ -11,15 +11,10 @@
   },
   "crons": [
     { "path": "/api/cron-active-task", "schedule": "30 12 * * *" },
-    { "path": "/api/cron-active-task", "schedule": "0 13 * * *" },
     { "path": "/api/cron-active-task", "schedule": "30 13 * * *" },
-    { "path": "/api/cron-active-task", "schedule": "0 14 * * *" },
     { "path": "/api/cron-active-task", "schedule": "30 14 * * *" },
-    { "path": "/api/cron-active-task", "schedule": "0 15 * * *" },
     { "path": "/api/cron-active-task", "schedule": "30 15 * * *" },
-    { "path": "/api/cron-active-task", "schedule": "0 16 * * *" },
     { "path": "/api/cron-active-task", "schedule": "30 16 * * *" },
-    { "path": "/api/cron-active-task", "schedule": "0 17 * * *" },
     { "path": "/api/cron-active-task", "schedule": "30 17 * * *" }
   ]
 }
