@@ -1,7 +1,7 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const { claimSingleInstance } = require('./single-instance');
-const { registerBotHandlers } = require('./lib/bot-handlers');
+const { registerBotHandlers, BOT_COMMANDS } = require('./lib/bot-handlers');
 
 claimSingleInstance();
 
@@ -14,12 +14,14 @@ async function main() {
 
   const tgBot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
   registerBotHandlers(tgBot);
-  console.log(
-    'Telegram bot listening (polling). Commands: /start /login /run /logout /whoami'
-  );
+
+  console.log('Telegram bot listening (polling). Commands:');
+  for (const c of BOT_COMMANDS) {
+    console.log(`  /${c.command} — ${c.description}`);
+  }
 }
 
 main().catch(err => {
-  console.error(err.response?.data || err.message || err);
+  console.error(err.message || err);
   process.exit(1);
 });
