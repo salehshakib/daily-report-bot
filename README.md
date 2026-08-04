@@ -7,7 +7,7 @@ Telegram bot that logs into Taghyeer PM and generates a daily task report.
 ```bash
 npm install
 cp .env.example .env   # fill TELEGRAM_BOT_TOKEN + PM_API_URL
-npm run telegram
+npm start
 ```
 
 Credentials are saved in `sessions.json` keyed by Telegram user id (gitignored).
@@ -67,7 +67,7 @@ Then `/start` in Telegram.
 
 ### Notes
 
-- Stop local `npm run telegram` while using Vercel — polling deletes the webhook.
+- Stop local `npm start` while using Vercel — polling deletes the webhook.
 - `/run` retries PM login up to **3 times**; if all fail it clears that user’s saved credentials and asks them to `/login` again.
 
 ## Report format

@@ -69,7 +69,6 @@ async function saveSessions(sessions) {
     await put(BLOB_PATHNAME, JSON.stringify(sessions, null, 2), {
       access: 'private',
       addRandomSuffix: false,
-      allowOverwrite: true,
       overwrite: true,
       contentType: 'application/json',
       cacheControlMaxAge: 0,
@@ -105,7 +104,6 @@ async function setSession(telegramUserId, data) {
     ...data,
     updatedAt: new Date().toISOString(),
   };
-  // Drop null pendingLogin if present
   if (sessions[key].pendingLogin == null) {
     delete sessions[key].pendingLogin;
   }
