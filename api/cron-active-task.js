@@ -1,8 +1,9 @@
 const { runActiveTaskAlerts } = require('../lib/active-task-alert');
 
 /**
- * Vercel Cron Job — TEST schedule: 15:25 Asia/Dhaka (09:25 UTC).
- * Change back to 18:30 Dhaka = `30 12 * * *` after testing.
+ * Vercel Cron — every 30 minutes (`0,30 * * * *`).
+ * Alerts only send at/after 18:30 Asia/Dhaka, every 30 min, until
+ * the user pauses/completes (stored as activeTaskResolvedDate).
  *
  * Set CRON_SECRET in Vercel env. Vercel sends: Authorization: Bearer <CRON_SECRET>
  */

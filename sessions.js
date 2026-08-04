@@ -187,7 +187,8 @@ async function listLoggedInSessions() {
       name: data.name,
       token: data.token || null,
       tokenExp: data.tokenExp || null,
-      activeTaskAlertDate: data.activeTaskAlertDate || null,
+      activeTaskResolvedDate: data.activeTaskResolvedDate || null,
+      lastActiveTaskAlertAt: data.lastActiveTaskAlertAt || null,
     });
   }
 

@@ -12,7 +12,7 @@
   "crons": [
     {
       "path": "/api/cron-active-task",
-      "schedule": "25 9 * * *"
+      "schedule": "0,30 * * * *"
     }
   ]
 }
