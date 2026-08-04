@@ -204,13 +204,15 @@ async function listLoggedInSessions() {
 
   for (const id of ids) {
     const data = useBlob() ? await loadBlob(id) : loadLocal(id);
-    if (!data?.email || !data?.password) continue;
+    if (!data?.token && (!data?.email || !data?.password)) continue;
     sessions.push({
       telegramUserId: id,
       chatId: data.chatId || id,
       email: data.email,
       password: data.password,
       name: data.name,
+      token: data.token || null,
+      tokenExp: data.tokenExp || null,
       activeTaskAlertDate: data.activeTaskAlertDate || null,
     });
   }
