@@ -8,6 +8,21 @@ Built as a personal tool. Runs locally for quick iteration, or on Vercel with we
 
 ---
 
+## How I built it
+
+I started with [@BotFather](https://t.me/BotFather) — created the bot, grabbed the token, and got a basic Telegram listener talking to Taghyeer PM.
+
+From there it grew with whatever I actually needed day to day:
+
+1. **Daily report** — `/run` for today + next working day  
+2. **Login per user** — save PM credentials, survive Vercel cold starts with Blob  
+3. **Active task** — `/active`, `/pause`, `/complete` when something is still running  
+4. **After-hours reminders** — hourly pings from 18:30 Dhaka until I pause or complete  
+
+Not a product roadmap — just features I asked for as the workflow got clearer.
+
+---
+
 ## What it does
 
 | | |
