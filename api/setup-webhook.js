@@ -30,20 +30,10 @@ module.exports = async function handler(req, res) {
     await bot.setWebHook(webhookUrl);
     await bot.setMyCommands(BOT_COMMANDS);
     const info = await bot.getWebHookInfo();
-    const blobKeys = Object.keys(process.env)
-      .filter(k => /BLOB/i.test(k))
-      .sort();
-
     res.status(200).json({
       ok: true,
       webhookUrl,
       info,
-      storage: {
-        hasBlobReadWriteToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
-        hasBlobStoreId: Boolean(process.env.BLOB_STORE_ID),
-        vercelEnv: process.env.VERCEL_ENV || null,
-        blobRelatedEnvKeys: blobKeys,
-      },
       tip: 'Open your bot in Telegram and send /start',
     });
   } catch (err) {
