@@ -8,15 +8,16 @@ process.env.PM_API_URL = process.env.PM_API_URL || 'http://localhost';
 process.env.TIMEZONE = process.env.TIMEZONE || 'Asia/Dhaka';
 
 const report = require('./lib/report');
-const { parseInputDate, toDisplayDate } = report;
+const { parseInputDate } = report;
 
 // --- date parsing ---
+assert.strictEqual(parseInputDate('2026-09-13'), '2026-09-13');
+assert.strictEqual(parseInputDate(' 2026-01-01 '), '2026-01-01');
+// dd-mm-yyyy still accepted on input
 assert.strictEqual(parseInputDate('13-09-2026'), '2026-09-13');
-assert.strictEqual(parseInputDate(' 01-01-2026 '), '2026-01-01');
-assert.strictEqual(toDisplayDate('2026-09-13'), '13-09-2026');
-assert.throws(() => parseInputDate('2026-09-13'), /Use dd-mm-yyyy/);
-assert.throws(() => parseInputDate('13-13-2026'), /Use dd-mm-yyyy/);
-assert.throws(() => parseInputDate('1-9-2026'), /Use dd-mm-yyyy/);
+assert.throws(() => parseInputDate('2026-13-01'), /Use yyyy-mm-dd/);
+assert.throws(() => parseInputDate('2026-9-1'), /Use yyyy-mm-dd/);
+assert.throws(() => parseInputDate('not-a-date'), /Use yyyy-mm-dd/);
 
 // --- range worktime + estimate ---
 // Dhaka is UTC+6, so 2026-09-13 local = 2026-09-12T18:00Z .. 2026-09-13T18:00Z
@@ -53,7 +54,7 @@ axios.get = async () => ({ data: { data: [task] } });
     assert.ok(out.includes('TOTAL ET: 2h'), `total estimate wrong:\n${out}`);
     assert.ok(out.includes('TOTAL WT: 1h 4m'), `total worked wrong:\n${out}`);
     assert.ok(out.includes('DIFF: -55m'), `diff wrong:\n${out}`);
-    assert.ok(out.includes('13-09-2026 to 13-09-2026'), `header wrong:\n${out}`);
+    assert.ok(out.includes('2026-09-13 to 2026-09-13'), `header wrong:\n${out}`);
 
     // Empty range
     axios.get = async () => ({ data: { data: [] } });

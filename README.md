@@ -43,8 +43,8 @@ Sessions are per Telegram user. Passwords stay in private storage (local files, 
 | `/start` | Help |
 | `/login` | Save PM email + password |
 | `/run` | Generate today’s report |
-| `/run 13-09-2026` | Report for a specific day (dd-mm-yyyy) |
-| `/etwt 10-09-2026 13-09-2026` | Estimated vs actual work time over a date range |
+| `/run 2026-09-13` | Report for a specific day (yyyy-mm-dd) |
+| `/etwt 2026-09-10 2026-09-13` | Estimated vs actual work time over a date range |
 | `/daily_report_all` | All assignees’ today tasks (due-date filter, length 100) |
 | `/next_day_task_all` | All assignees’ next-day tasks (due-date filter, length 100) |
 | `/active` | Show active task + timers |
@@ -69,13 +69,13 @@ Date: 2026-08-04
 Name: Saleh Shakib
 Projects: Admin Panel, Virtual Trading
 
-Today:
+2026-08-04:
 #TASK-2096: api requirements for local lp
 
-Next day: N/A
+2026-08-05: N/A
 ```
 
-**Next day** = next working day. Thursday rolls to Sunday.
+Second section = next working day. Thursday rolls to Sunday.
 
 ---
 

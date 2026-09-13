@@ -8,7 +8,9 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "sync-commands": "node sync-commands.js",
+    "test": "node test-report.js"
   },
   "dependencies": {
     "@vercel/blob": "^2.6.1",
