@@ -65,6 +65,42 @@ axios.get = async () => ({ data: { data: [task] } });
     );
     assert.ok(empty.includes('No tasks due in this range.'));
 
+    // --- default week ranges: last / this / next, Sun-Thu ---
+    const weeks = report.getRecentWeekRanges('2026-09-16'); // a Wednesday
+    assert.deepStrictEqual(weeks, [
+      { from: '2026-09-06', to: '2026-09-10' },
+      { from: '2026-09-13', to: '2026-09-17' },
+      { from: '2026-09-20', to: '2026-09-24' },
+    ]);
+
+    // --- /etwt_all: per-user totals for each week, no task lines ---
+    axios.get = async () => ({
+      data: { data: [{ ...task, assignee: { _id: 'u1', name: 'Saleh Shakib' } }] },
+    });
+    const all = await report.runEstimationWorkAllReport({ token: 't' }, [
+      { from: '2026-09-06', to: '2026-09-10' },
+      { from: '2026-09-13', to: '2026-09-17' },
+    ]);
+    assert.ok(all.includes('Saleh Shakib'), `name missing:\n${all}`);
+    assert.ok(all.includes('2026-09-06 to 2026-09-10'), `range 1 missing:\n${all}`);
+    assert.ok(all.includes('2026-09-13 to 2026-09-17'), `range 2 missing:\n${all}`);
+    // one table per user: name first, then the rows
+    assert.ok(
+      all.indexOf('Saleh Shakib') < all.indexOf('2026-09-06'),
+      `not grouped by user:\n${all}`
+    );
+    assert.ok(all.includes('Date '), `table header missing:\n${all}`);
+    // columns padded to the widest cell, worktime falls in the second week only
+    assert.ok(
+      all.includes('2026-09-06 to 2026-09-10 | 2h | N/A'),
+      `empty week row wrong:\n${all}`
+    );
+    assert.ok(
+      all.includes('2026-09-13 to 2026-09-17 | 2h | 3h 4m'),
+      `worked week row wrong:\n${all}`
+    );
+    assert.ok(!all.includes('TASK-3466'), `should not list tasks:\n${all}`);
+
     console.log('ok');
   } finally {
     axios.get = originalGet;

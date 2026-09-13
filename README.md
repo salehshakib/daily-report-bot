@@ -44,9 +44,12 @@ Sessions are per Telegram user. Passwords stay in private storage (local files, 
 | `/login` | Save PM email + password |
 | `/run` | Generate today’s report |
 | `/run 2026-09-13` | Report for a specific day (yyyy-mm-dd) |
+| `/etwt` | Estimated vs actual work time for last, this and next week (Sun–Thu), one message each |
 | `/etwt 2026-09-10 2026-09-13` | Estimated vs actual work time over a date range |
-| `/daily_report_all` | All assignees’ today tasks (due-date filter, length 100) |
-| `/next_day_task_all` | All assignees’ next-day tasks (due-date filter, length 100) |
+| `/etwt_all` | Every assignee’s ET/WT as a Date/ET/WT table, one row per week (same three weeks) |
+| `/etwt_all 2026-09-10 2026-09-13` | Every assignee’s ET/WT totals over a date range |
+| `/daily_report_all` | All assignees’ today tasks (due-date filter) |
+| `/next_day_task_all` | All assignees’ next-day tasks (due-date filter) |
 | `/active` | Show active task + timers |
 | `/pause` | Pause the active task |
 | `/complete` | Complete the active task |
