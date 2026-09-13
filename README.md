@@ -43,6 +43,8 @@ Sessions are per Telegram user. Passwords stay in private storage (local files, 
 | `/start` | Help |
 | `/login` | Save PM email + password |
 | `/run` | Generate today’s report |
+| `/run 13-09-2026` | Report for a specific day (dd-mm-yyyy) |
+| `/etwt 10-09-2026 13-09-2026` | Estimated vs actual work time over a date range |
 | `/daily_report_all` | All assignees’ today tasks (due-date filter, length 100) |
 | `/next_day_task_all` | All assignees’ next-day tasks (due-date filter, length 100) |
 | `/active` | Show active task + timers |
