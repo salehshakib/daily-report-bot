@@ -4,7 +4,7 @@ A small Telegram companion for Taghyeer PM.
 
 Log in once, then pull today’s report, check what’s still running after work hours, and pause or complete it — without opening the PM dashboard.
 
-Built as a personal tool. Runs locally for quick iteration, or on Vercel with webhooks + Blob + cron.
+Built as a personal tool. Runs locally for quick iteration, or on Vercel with webhooks + Blob, with the after-hours cron on GitHub Actions.
 
 ---
 
@@ -120,24 +120,31 @@ Then `/start` in the bot.
 
 ### 4. After-hours cron
 
-Hobby can’t schedule “every hour” as one expression, so `vercel.json` lists **once-daily** jobs for:
+Vercel Hobby only allows **once-per-day** crons, so the schedule lives in GitHub Actions instead — [`.github/workflows/active-task-alerts.yml`](.github/workflows/active-task-alerts.yml) curls `/api/cron-active-task` at:
 
 **18:30 · 19:30 · 20:30 · 21:30 · 22:30 · 23:30** Asia/Dhaka
+
+Add two repository secrets (**Settings → Secrets and variables → Actions**):
+
+| secret | value |
+|---|---|
+| `APP_URL` | `https://YOUR_APP.vercel.app` |
+| `CRON_SECRET` | same value as the Vercel env var |
+
+Run it once by hand from the **Actions** tab to check the wiring.
 
 A ping only fires when:
 
 - it’s at/after 18:30  
-- the stored PM JWT is still valid  
+- credentials are stored (an expired JWT is refreshed automatically)  
 - there’s an active task  
 - you haven’t `/pause` or `/complete` yet today  
-
-Confirm under **Settings → Cron Jobs** after deploy.
 
 ---
 
 ## Stack
 
-Node 18+ · `node-telegram-bot-api` · Axios · Vercel Blob · Vercel Cron
+Node 18+ · `node-telegram-bot-api` · Axios · Vercel Blob · GitHub Actions cron
 
 ---
 

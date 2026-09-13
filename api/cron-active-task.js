@@ -1,9 +1,9 @@
 const { runActiveTaskAlerts } = require('../lib/active-task-alert');
 
 /**
- * Vercel Cron — one job, hourly 18:30 → 23:30 Asia/Dhaka (see vercel.json crons).
- * Sub-daily schedules need a Pro plan; on Hobby, point an external cron
- * (e.g. cron-job.org) at this URL with the same Bearer CRON_SECRET header.
+ * Triggered hourly 18:30 → 23:30 Asia/Dhaka by
+ * .github/workflows/active-task-alerts.yml — Vercel Hobby only allows
+ * once-per-day crons, so vercel.json declares none.
  *
  * Alerts only send at/after 18:30 Asia/Dhaka, every ~1 hour, until
  * the user pauses/completes (stored as activeTaskResolvedDate).
